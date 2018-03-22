@@ -12,21 +12,13 @@ import android.widget.Toast;
 public class QuizActivity extends AppCompatActivity {
 
     private static final String TAG = "QuizActivity";
-    private static final String KEY_INDEX = "index";
 
     private Button trueButton;
     private Button falseButton;
     private ImageButton prevButton;
     private ImageButton nextButton;
     private TextView questionTextView;
-    private Question[] questions = new Question[] {
-        new Question(R.string.question_united_states, true),
-                new Question(R.string.question_oceans, true),
-                new Question(R.string.question_mideast, false),
-                new Question(R.string.question_africa, false),
-                new Question(R.string.question_asia, true),
-    };
-    private int currentIndex = 0;
+    private Quiz quiz;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,18 +26,22 @@ public class QuizActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate(Bundle) called");
         setContentView(R.layout.activity_quiz);
 
+        quiz = new Quiz();
+
         if (savedInstanceState != null) {
-            currentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+            quiz.onRestoreInstanceState(savedInstanceState);
         }
 
         questionTextView = (TextView) findViewById(R.id.question_text_view);
-        updateQuestion();
 
         trueButton = (Button) findViewById(R.id.true_button);
         trueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 checkAnswer(true);
+                checkQuizState();
+                quiz.nextQuestion();
+                updateQuestion();
             }
         });
 
@@ -54,6 +50,9 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 checkAnswer(false);
+                checkQuizState();
+                quiz.nextQuestion();
+                updateQuestion();
             }
         });
 
@@ -61,7 +60,7 @@ public class QuizActivity extends AppCompatActivity {
         prevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                currentIndex = (currentIndex + questions.length - 1) % questions.length;
+                quiz.prevQuestion();
                 updateQuestion();
             }
         });
@@ -70,20 +69,30 @@ public class QuizActivity extends AppCompatActivity {
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                currentIndex = (currentIndex + 1) % questions.length;
+                quiz.nextQuestion();
                 updateQuestion();
             }
         });
+
+        updateQuestion();
     }
 
     private void updateQuestion() {
-        int question = questions[currentIndex].getTextResId();
+        int question = quiz.getCurrentQuestion().getTextResId();
         questionTextView.setText(question);
+        Log.d(TAG, "question was answered: " + quiz.currentQuestionIsAnswered());
+        if (quiz.currentQuestionIsAnswered()) {
+            trueButton.setEnabled(false);
+            falseButton.setEnabled(false);
+        } else {
+            trueButton.setEnabled(true);
+            falseButton.setEnabled(true);
+        }
     }
 
     private void checkAnswer(boolean userPressedTrue) {
         int message = 0;
-        if (questions[currentIndex].isAnswerTrue() == userPressedTrue) {
+        if (quiz.checkAnswer(userPressedTrue)) {
             message = R.string.correct_toast;
         } else {
             message = R.string.incorrect_toast;
@@ -93,40 +102,52 @@ public class QuizActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
     }
 
+    public void checkQuizState() {
+        if (quiz.isComplete()) {
+            Toast.makeText(QuizActivity.this,
+                    String.format(
+                            "Quiz Complete! You scored %d%% (%d/%d)",
+                            quiz.score(),
+                            quiz.getCorrect(),
+                            quiz.numberOfQuestions()),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override
     public void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart() called");
+//        Log.d(TAG, "onStart() called");
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume() called");
+//        Log.d(TAG, "onResume() called");
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Log.d(TAG, "onPause() called");
+//        Log.d(TAG, "onPause() called");
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        Log.i(TAG, "onInstanceState");
-        savedInstanceState.putInt(KEY_INDEX, currentIndex);
+//        Log.i(TAG, "onInstanceState");
+        quiz.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Log.d(TAG, "onSop() called");
+//        Log.d(TAG, "onSop() called");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy() called");
+//        Log.d(TAG, "onDestroy() called");
     }
 }
