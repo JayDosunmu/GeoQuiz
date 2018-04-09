@@ -1,5 +1,7 @@
 package com.turtlewave.geoquiz;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -12,16 +14,18 @@ import android.widget.Toast;
 public class QuizActivity extends AppCompatActivity {
 
     private static final String TAG = "QuizActivity";
+    private static final int REQUEST_CODE_CHEAT = 0;
 
     private Button trueButton;
     private Button falseButton;
+    private Button cheatButton;
     private ImageButton prevButton;
     private ImageButton nextButton;
     private TextView questionTextView;
     private Quiz quiz;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate(Bundle) called");
         setContentView(R.layout.activity_quiz);
@@ -74,7 +78,30 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
+        cheatButton = (Button) findViewById(R.id.cheat_button);
+        cheatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean answerIsTrue = quiz.getCurrentQuestion().isAnswerTrue();
+                Intent intent = CheatActivity.newIntent(QuizActivity.this, answerIsTrue);
+                startActivityForResult(intent, REQUEST_CODE_CHEAT);
+            }
+        });
+
         updateQuestion();
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+
+        if (requestCode == REQUEST_CODE_CHEAT) {
+            if (data == null) {
+                return;
+            }
+            quiz.setCheater(CheatActivity.wasAnswerShown(data));
+        }
     }
 
     private void updateQuestion() {
@@ -92,10 +119,14 @@ public class QuizActivity extends AppCompatActivity {
 
     private void checkAnswer(boolean userPressedTrue) {
         int message = 0;
-        if (quiz.checkAnswer(userPressedTrue)) {
-            message = R.string.correct_toast;
+        if (quiz.isCheater()) {
+            message = R.string.judgement_toast;
         } else {
-            message = R.string.incorrect_toast;
+            if (quiz.checkAnswer(userPressedTrue)) {
+                message = R.string.correct_toast;
+            } else {
+                message = R.string.incorrect_toast;
+            }
         }
         Toast.makeText(QuizActivity.this,
                 message,

@@ -7,12 +7,13 @@ import android.os.Bundle;
  */
 
 public class Quiz {
-    private static final String KEY_INDEX = "index";
-    private static final String KEY_CORRECT = "correct";
-    private static final String KEY_ANSWERED_QUESTIONS = "answered_questions";
+    public static final String KEY_INDEX = "index";
+    public static final String KEY_CORRECT = "correct";
+    public static final String KEY_ANSWERED_QUESTIONS = "answered_questions";
 
     private Question[] questions;
     private boolean[] answered_questions;
+    private boolean[] isCheater;
     private int currentIndex = 0;
     private int correct = 0;
 
@@ -24,7 +25,8 @@ public class Quiz {
                 new Question(R.string.question_africa, false),
                 new Question(R.string.question_asia, true),
         };
-        answered_questions = new boolean[5];
+        answered_questions = new boolean[questions.length];
+        isCheater = new boolean[questions.length];
     }
 
     public Question getCurrentQuestion() {
@@ -113,5 +115,13 @@ public class Quiz {
 
     public void setAnswered_questions(boolean[] answered_questions) {
         this.answered_questions = answered_questions;
+    }
+
+    public boolean isCheater() {
+        return isCheater[currentIndex];
+    }
+
+    public void setCheater(boolean cheater) {
+        isCheater[currentIndex] = cheater;
     }
 }
